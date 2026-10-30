@@ -1,0 +1,24 @@
+name: build-levipack
+on: [push, workflow_dispatch]
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: nttld/setup-ndk@v1
+        id: ndk
+        with: { ndk-version: r27c }
+      - name: Fetch preloader-android
+        run: git clone --depth 1 https://github.com/LiteLDev/preloader-android.git preloader-android
+      - name: Configure + build (arm64-v8a)
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE=${{ steps.ndk.outputs.ndk-path }}/build/cmake/android.toolchain.cmake \
+            -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=android-29 -DANDROID_STL=c++_shared
+          cmake --build build -j
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LeviShaders
+          path: |
+            build/libLeviShaders.so
+            build/LeviShaders.levipack
